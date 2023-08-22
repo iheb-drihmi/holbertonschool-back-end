@@ -2,28 +2,20 @@
 """
 Export to JSON
 """
+import json
 import requests
 import sys
-import json
 
 if __name__ == "__main__":
-    """ Gets employee info in json format """
-    id = sys.argv[1]
-    tasks = []
+    url = "https://jsonplaceholder.typicode.com"
+    user_id = sys.argv[1]
+    user = requests.get(f"{url}/users/{user_id}").json()
+    todos = requests.get(f"{url}/todos", params={"userId": user_id}).json()
 
-    user_url = requests.get(
-        'https://jsonplaceholder.typicode.com/users/' + id).json()
-    todos = requests.get(
-        'https://jsonplaceholder.typicode.com/todos?userId=' + id).json()
+    user_todos = [{"task": todo["title"], "completed": todo["completed"],
+                   "username": user["username"]} for todo in todos]
 
-    for task in todos:
-        task_data = {
-            'task': task['title'],
-            'completed': task['completed'],
-            'username': user_url['username']
-        }
-        tasks.append(task_data)
-    data = {id: tasks}
+    output_data = {user_id: user_todos}
 
-    with open(id + '.json', 'w') as f:
-        json.dump(data, f)
+    with open(f"{user_id}.json", "w") as outfile:
+        json.dump(output_data, outfile)
