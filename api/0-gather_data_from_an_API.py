@@ -5,35 +5,41 @@ for a given employee ID, returns information about
 his/her TODO list progress
 """
 import requests
-from sys import argv
+import sys
 
-if __name__ == "__main__":
-    if len(argv) != 2:
-        exit()
+def fetch_employee_data(employee_id):
+    base_url = 'https://jsonplaceholder.typicode.com'
+    user_url = f'{base_url}/users/{employee_id}'
+    todos_url = f'{base_url}/todos?userId={employee_id}'
 
-    user_id = argv[1]
-    user_url = f'https://jsonplaceholder.typicode.com/users/{user_id}'
     user_response = requests.get(user_url)
-
-    if user_response.status_code != 200:
-        print("Error fetching user data.")
-        exit()
-
-    user = user_response.json()
-
-    todos_url = f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
     todos_response = requests.get(todos_url)
 
-    if todos_response.status_code != 200:
-        print("Error fetching user's tasks.")
-        exit()
+    if user_response.status_code != 200 or todos_response.status_code != 200:
+        sys.exit(1)
 
-    todos = todos_response.json()
+    user_data = user_response.json()
+    todos_data = todos_response.json()
 
-    completed_tasks = [task.get('title') for task in todos if task.get('completed') is True]
-    print(f"Employee {user.get('name')} is done with tasks({len(completed_tasks)}/{len(todos)}):")
-    for task in completed_tasks:
-        print(f"\t{task}")
+    return user_data, todos_data
+
+def display_progress(employee_name, done_tasks, total_tasks):
+    print(f"Employee {employee_name} is done with tasks({len(done_tasks)}/{total_tasks}):")
+    for task in done_tasks:
+        print(f"     {task['title']}")
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        sys.exit(1)
+
+    employee_id = int(sys.argv[1])
+    user_data, todos_data = fetch_employee_data(employee_id)
+
+    employee_name = user_data['name']
+    done_tasks = [task for task in todos_data if task['completed']]
+    total_tasks = len(todos_data)
+
+    display_progress(employee_name, done_tasks, total_tasks)
 
 
 
